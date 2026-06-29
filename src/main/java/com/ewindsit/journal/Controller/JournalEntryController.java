@@ -1,54 +1,66 @@
 package com.ewindsit.journal.Controller;
 
 import com.ewindsit.journal.entity.JournalEntry;
+import com.ewindsit.journal.service.JournalEntryService;
+import org.bson.types.ObjectId;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @RestController
-@RequestMapping("/journal") //adds mapping on the whole class
+@RequestMapping("/journal")
 public class JournalEntryController {
-private Map<Long, JournalEntry> journalEntries = new HashMap<>();
-//we use map to store entries
-@GetMapping //general
-    public List<JournalEntry> getAll() { // localhost:8080/journal GET
-    return new ArrayList<>(journalEntries.values());
-    // here we use list for entries
-}
-@PostMapping  //general
-    public boolean createEntry(@RequestBody JournalEntry myEntry) { // localhost:8080/journal POST
-//myEntry is a variable
-    journalEntries.put(myEntry.getId(), myEntry); //adding the entries
-    return true;
+    @Autowired
+    private JournalEntryService journalEntryService;
 
-}
-//if you want to send values through id
-    // use two things path variable, request parameter
-    //example localhost:8080/journal/id/2
-    //id=path variable, 2=request parameter
-@GetMapping("id/{myId}")
-public JournalEntry getJournalEntryById(@PathVariable Long myId) { // localhost:8080/journal GET
-    return journalEntries.get(myId);
-    // in order to retrieve entries with path variable (id)
+    @GetMapping //general
+    public List<JournalEntry> getAll()
+    {
+        return journalEntryService.getAll();
+    }
 
-}
+    @PostMapping  //general
+    public boolean createEntry(@RequestBody JournalEntry myEntry)
+    {
+        myEntry.setDate(LocalDateTime.now());
+        journalEntryService.saveEntry(myEntry);
+        return true;//you can return myEntry
+    }
+//get journal entry by id, delete journal entry by id, update journal entry by id
+    @GetMapping("id/{myId}")
+    public JournalEntry getJournalEntryById(@PathVariable ObjectId myId)
+    {
+        return journalEntryService.findById(myId).orElse(null); //optional datatype is used to avoid null pointer exception, if not found return null
+    }
+
     @DeleteMapping("id/{myId}")
-    public JournalEntry deleteJournalEntryById(@PathVariable Long myId) {
-        return journalEntries.remove(myId);
-
-
+    public boolean deleteJournalEntryById(@PathVariable ObjectId myId)
+    {
+      journalEntryService.deleteById(myId);
+      return true;
     }
+
     @PutMapping("id/{id}")
-    public JournalEntry updateJournalEntryById(@PathVariable Long id,@RequestBody JournalEntry myEntry  ) {
-        return journalEntries.put(id, myEntry);
+    public JournalEntry updateJournalEntryById(@PathVariable ObjectId id, @RequestBody JournalEntry newEntry)
+    {
+//so we need to check if the entry exists or not, if it exists then update it, if not then create a new entry
+        JournalEntry old = journalEntryService.findById(id).orElse(null);
+        if(old != null)
+        {
 
+            old.setTitle(newEntry.getTitle() != null && !newEntry.getTitle().isEmpty() ? newEntry.getTitle() : old.getTitle());
+            old.setContent(newEntry.getContent() != null && !newEntry.getContent().isEmpty() ? newEntry.getContent() : old.getContent());
+            //so here i am not adding date because we want to keep the old date, if we add date then it will be updated to current date
+        }
 
+            journalEntryService.saveEntry(old);
+            return old;
+        }
     }
 
-}
+
 
 
 
