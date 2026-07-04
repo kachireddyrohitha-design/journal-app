@@ -1,4 +1,4 @@
-﻿package com.ewindsit.journal.service;
+package com.ewindsit.journal.service;
 
 import com.ewindsit.journal.entity.User;
 import com.ewindsit.journal.repository.UserRepository;
@@ -6,6 +6,7 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,7 +17,19 @@ public class UserService {
     @Autowired //dependency injection
     private UserRepository userRepository; //userRepository calls using autowired and field injection
     //interface's implementation
+public boolean saveNewUser(User user)
+    try{
 
+        user.setPassword(userRepository.findByUsername(user.getUsername()).getPassword());
+        user.setRoles(Arrays.asList("USER"));
+        userRepository.save(user);
+        return true; // User saved successfully
+    } catch (Exception e) {
+            return false; // User with the same username already exists
+        }
+        userRepository.save(user);
+        return true; // User saved successfully
+    }
     public void saveUser(User user)
     {//for post method
         userRepository.save(user);// save is in mongo class crud repository

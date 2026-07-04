@@ -1,4 +1,4 @@
-﻿package com.ewindsit.journal.entity;
+package com.ewindsit.journal.entity;
 
 import lombok.Data;
 import lombok.NonNull;
